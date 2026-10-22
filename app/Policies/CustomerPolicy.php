@@ -30,7 +30,7 @@ class CustomerPolicy
 
     public function delete(User $user, Customer $customer): bool
     {
-        return $this->hasAnyRole($user, UserRole::Owner, UserRole::Manager);
+        return $user->role === UserRole::Owner;
     }
 
     private function hasAnyRole(User $user, UserRole ...$roles): bool

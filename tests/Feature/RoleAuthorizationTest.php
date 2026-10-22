@@ -42,7 +42,7 @@ class RoleAuthorizationTest extends TestCase
             'customer manager can view' => [Customer::class, UserRole::Manager, 'view', true],
             'customer manager can create' => [Customer::class, UserRole::Manager, 'create', true],
             'customer manager can update' => [Customer::class, UserRole::Manager, 'update', true],
-            'customer manager can delete' => [Customer::class, UserRole::Manager, 'delete', true],
+            'customer manager cannot delete' => [Customer::class, UserRole::Manager, 'delete', false],
             'customer cashier can list' => [Customer::class, UserRole::Cashier, 'viewAny', true],
             'customer cashier can view' => [Customer::class, UserRole::Cashier, 'view', true],
             'customer cashier can create' => [Customer::class, UserRole::Cashier, 'create', true],
