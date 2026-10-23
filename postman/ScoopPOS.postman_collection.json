@@ -1,0 +1,211 @@
+{
+  "info": {
+    "_postman_id": "1a5f47e4-52dc-4a4c-9592-4d0def38c540",
+    "name": "ScoopPOS API",
+    "description": "Run php artisan migrate --seed first. Login stores the bearer token; create requests store resource IDs for the subsequent update and delete examples.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:8000/api" },
+    { "key": "token", "value": "" },
+    { "key": "categoryId", "value": "1" },
+    { "key": "itemId", "value": "1" },
+    { "key": "customerId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login as Owner",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('returns 200', function () { pm.response.to.have.status(200); });",
+                "pm.collectionVariables.set('token', pm.response.json().token);"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"owner@scooppos.test\",\n  \"password\": \"password\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/user"
+          }
+        },
+        {
+          "name": "Logout Current Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Inventory",
+      "item": [
+        {
+          "name": "List Items",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/items"
+          }
+        },
+        {
+          "name": "Search Items by Name",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/items?search=Chocolate"
+          }
+        },
+        {
+          "name": "Get Item",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/items/{{itemId}}"
+          }
+        },
+        {
+          "name": "Create Item",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('returns 201', function () { pm.response.to.have.status(201); });",
+                "pm.collectionVariables.set('itemId', pm.response.json().data.id);"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_id\": {{categoryId}},\n  \"name\": \"Postman Salted Caramel {{$guid}}\",\n  \"description\": \"Created from the ScoopPOS Postman collection.\",\n  \"unit_price\": \"4.50\",\n  \"stock_quantity\": 24\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/items"
+          }
+        },
+        {
+          "name": "Update Item",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stock_quantity\": 20\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/items/{{itemId}}"
+          }
+        },
+        {
+          "name": "Delete Item",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/items/{{itemId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "List Customers",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/customers"
+          }
+        },
+        {
+          "name": "Get Customer",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/customers/{{customerId}}"
+          }
+        },
+        {
+          "name": "Create Customer",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "pm.test('returns 201', function () { pm.response.to.have.status(201); });",
+                "pm.collectionVariables.set('customerId', pm.response.json().data.id);"
+              ]
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Customer\",\n  \"email\": \"postman-{{$guid}}@example.test\",\n  \"phone\": \"+94770000000\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/customers"
+          }
+        },
+        {
+          "name": "Update Customer",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+94771111111\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/customers/{{customerId}}"
+          }
+        },
+        {
+          "name": "Delete Customer",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/customers/{{customerId}}"
+          }
+        }
+      ]
+    }
+  ]
+}
