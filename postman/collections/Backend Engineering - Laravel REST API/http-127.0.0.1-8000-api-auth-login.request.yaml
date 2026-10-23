@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=none
+$kind: http-request
+name: Login as Owner
+description: Obtain a bearer token using the seeded local-development Owner account.
+url: http://127.0.0.1:8000/api/auth/login
+method: POST
+body:
+  type: json
+  content: '{"email":"owner@scooppos.test","password":"password"}'
+order: 1000
