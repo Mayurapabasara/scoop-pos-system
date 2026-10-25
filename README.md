@@ -8,6 +8,7 @@ ScoopPOS is a Laravel 12 REST API for managing an ice cream shop's inventory and
 - Owner, Manager, and Cashier roles enforced with Laravel policies
 - Inventory CRUD with category relationships and item-name search
 - Customer CRUD with duplicate-email protection
+- Completed-sale creation with item snapshots, payment records, and atomic stock deduction
 - Form Request validation and API Resources
 - PHPUnit feature coverage, Laravel Pint, and GitHub Actions CI
 
@@ -98,10 +99,32 @@ Authorization: Bearer <token>
 | POST | `/api/customers` | All roles |
 | PUT/PATCH | `/api/customers/{customer}` | All roles |
 | DELETE | `/api/customers/{customer}` | Owner |
+| GET | `/api/sales` | Owner/Manager: all; Cashier: own sales |
+| GET | `/api/sales/{sale}` | Owner/Manager or the selling Cashier |
+| POST | `/api/sales` | All roles |
 
 Item creation and updates require a valid `category_id`, a non-negative price with up to two decimal places, and a non-negative integer stock quantity. Customer email is optional but unique when supplied.
 
 All successful item and customer payloads are JSON API Resources under `data`. Create operations return `201 Created` and a `Location` header; deletion returns `204 No Content`. Validation failures use `422`, unauthenticated requests use `401`, forbidden role actions use `403`, and missing resources use `404`.
+
+## Completing a sale
+
+`POST /api/sales` records an immutable completed sale. It locks the requested inventory rows, verifies stock, stores unit-price and item-name snapshots, records one or more payments, and deducts stock in the same transaction. The payment total must exactly equal the calculated item total.
+
+```json
+{
+  "customer_id": 1,
+  "items": [
+    { "item_id": 1, "quantity": 2 },
+    { "item_id": 2, "quantity": 1 }
+  ],
+  "payments": [
+    { "method": "cash", "amount": "11.00" }
+  ]
+}
+```
+
+Allowed payment methods are `cash`, `card`, and `digital`; a payment may include an optional `transaction_reference`. A sale cannot be updated or deleted through the API. Refunds are deliberately deferred until refund policy and payment-provider requirements are defined.
 
 ## Postman
 

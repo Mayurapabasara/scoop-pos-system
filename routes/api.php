@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\ItemController;
+use App\Http\Controllers\Api\SaleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -20,3 +21,4 @@ Route::get('/user', function (Request $request) {
 
 Route::middleware('auth:sanctum')->apiResource('items', ItemController::class);
 Route::middleware('auth:sanctum')->apiResource('customers', CustomerController::class);
+Route::middleware('auth:sanctum')->apiResource('sales', SaleController::class)->only(['index', 'store', 'show']);

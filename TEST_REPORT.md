@@ -1,7 +1,7 @@
 # ScoopPOS Test Report
 
 **QA date:** 2026-10-25
-**Scope:** Authentication, inventory, customer APIs, authorization, routing, validation, formatting, and production-readiness configuration.
+**Scope:** Authentication, inventory, customer, sales, authorization, routing, validation, formatting, and production-readiness configuration.
 
 ## Database safety
 
@@ -13,7 +13,7 @@ A dedicated MySQL profile is available in `phpunit.mysql.xml`. It requires a loc
 
 | Command | Result | Evidence |
 | --- | --- | --- |
-| `php artisan test` | Passed | 55 tests, 183 assertions, 2.16 seconds. |
+| `php artisan test` | Passed | 60 tests, 221 assertions, 2.43 seconds. |
 | `php artisan test --configuration=phpunit.mysql.xml` | Safely blocked | Exited before Laravel boot because `.env.testing` is absent; no database was touched. |
 | `php artisan route:list --path=api -vv` | Passed | 13 API routes registered; all logout, user, item, and customer routes show `Authenticate:sanctum`. |
 | `vendor/bin/pint --test` | Initially failed, then fixed | Detected formatting drift in `bootstrap/app.php`, `bootstrap/providers.php`, and `config/auth.php`. `vendor/bin/pint` applied its deterministic fixes; the subsequent `vendor/bin/pint --test` passed. |
@@ -45,6 +45,9 @@ A dedicated MySQL profile is available in `phpunit.mysql.xml`. It requires a loc
 | `POST /api/customers` | Sanctum bearer token + policy | All three roles can create; field and duplicate-email validation coverage. |
 | `PUT/PATCH /api/customers/{customer}` | Sanctum bearer token + policy | All three roles can update; retaining the current email succeeds, conflicting email returns 422. |
 | `DELETE /api/customers/{customer}` | Sanctum bearer token + policy | Owner success; Manager and Cashier return 403. |
+| `GET /api/sales` | Sanctum bearer token + policy | Cashiers receive only their own sales; Managers receive all sales. |
+| `GET /api/sales/{sale}` | Sanctum bearer token + policy | A Cashier is forbidden from viewing another Cashier's sale. |
+| `POST /api/sales` | Sanctum bearer token + policy | Successful checkout creates sale, line, and payment records while deducting stock. Insufficient stock and mismatched payment totals return 422 without persistence. |
 
 ## Authorization audit
 
@@ -56,6 +59,8 @@ A dedicated MySQL profile is available in `phpunit.mysql.xml`. It requires a loc
 | Customers | List, view, create, update, delete | List, view, create, update | List, view, create, update |
 
 The policies are also invoked by the API: read and delete actions call `Gate::authorize`, while create and update Form Requests call the corresponding policy before validation/persistence.
+
+Sales use a separate policy: Owner and Manager can view every sale, while Cashiers can list and view only sales they completed. All three roles can create a sale.
 
 ## Defects found and resolved
 
