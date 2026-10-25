@@ -121,7 +121,27 @@ vendor/bin/pint --test
 php artisan test
 ```
 
-The PHPUnit configuration uses a disposable in-memory SQLite database (`DB_DATABASE=:memory:`); it does not reset the local MySQL database. Review [TEST_REPORT.md](TEST_REPORT.md) for the latest QA evidence.
+The default PHPUnit configuration uses a disposable in-memory SQLite database (`DB_DATABASE=:memory:`); it does not reset the local MySQL database.
+
+### MySQL integration test profile
+
+Run the same suite against MySQL before a release. This profile is intentionally separate from the default suite and cannot start until a local `.env.testing` file exists:
+
+```powershell
+Copy-Item .env.testing.example .env.testing
+# Set only test-database credentials in .env.testing, then run:
+php artisan test --configuration=phpunit.mysql.xml
+```
+
+The profile always selects `scoop_pos_testing`, and `RefreshDatabase` recreates its tables. Never point `.env.testing` at a development or production database. Create a least-privilege MySQL account that can create, alter, and drop tables only in that test database.
+
+## Production configuration
+
+Use `.env.production.example` as a credential-free reference for the deployment environment; do not copy it to source control with real secrets. Production must set `APP_DEBUG=false`, an HTTPS `APP_URL`, and `FORCE_HTTPS=true` only after TLS is terminated by the web server or a trusted reverse proxy.
+
+Cross-origin API access is denied by default. If a browser client needs it, set `CORS_ALLOWED_ORIGINS` to an explicit comma-separated allowlist of HTTPS origins. Do not use `*` for authenticated clients.
+
+Login is limited to five attempts per minute for each email-and-IP pair. Production logging uses Laravel's rotating `daily` log channel in the provided template; ship and alert on those logs through the hosting platform or a central log service.
 
 GitHub Actions runs Composer validation, Pint, and the test suite on PHP 8.3 via [.github/workflows/ci.yml](.github/workflows/ci.yml).
 

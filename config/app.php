@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | HTTPS URL Generation
+    |--------------------------------------------------------------------------
+    |
+    | Enable this only when TLS is terminated by the web server or a trusted
+    | reverse proxy. Local development and automated tests remain HTTP.
+    |
+    */
+
+    'force_https' => env('FORCE_HTTPS', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

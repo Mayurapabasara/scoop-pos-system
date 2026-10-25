@@ -60,6 +60,23 @@ class AuthenticationTest extends TestCase
             ->assertJsonValidationErrors(['email', 'password']);
     }
 
+    public function test_login_is_rate_limited_after_five_attempts_from_the_same_address(): void
+    {
+        $request = fn () => $this->withServerVariables(['REMOTE_ADDR' => '192.0.2.1'])
+            ->postJson('/api/auth/login', [
+                'email' => 'owner@scooppos.test',
+                'password' => 'incorrect-password',
+            ]);
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $request()->assertUnprocessable();
+        }
+
+        $request()
+            ->assertTooManyRequests()
+            ->assertHeader('Retry-After');
+    }
+
     public function test_protected_routes_reject_requests_without_a_bearer_token(): void
     {
         $this->getJson('/api/user')
