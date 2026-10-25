@@ -1,23 +1,32 @@
 # ScoopPOS Test Report
 
-**QA date:** 2026-10-22  
-**Scope:** Authentication, inventory, customer APIs, authorization, routing, validation, and formatting.
+**QA date:** 2026-10-25
+**Scope:** Authentication, inventory, customer APIs, authorization, routing, validation, formatting, and production-readiness configuration.
 
 ## Database safety
 
 No database-reset command was run against the local application database. The automated suite runs with `APP_ENV=testing`, `DB_CONNECTION=sqlite`, and `DB_DATABASE=:memory:` as configured in `phpunit.xml`. `RefreshDatabase` therefore uses only disposable in-memory test data.
 
-The suite has not been run against a configured MySQL test database in this environment. MySQL-specific verification remains a deployment-environment follow-up once disposable test credentials are available.
+A dedicated MySQL profile is available in `phpunit.mysql.xml`. It requires a local, ignored `.env.testing` configured for the `scoop_pos_testing` database and refuses to start without that file, preventing accidental use of development credentials. The profile was not run in this environment because the local MySQL80 service could not be started by this session and no dedicated test credentials are configured.
 
 ## Commands and results
 
 | Command | Result | Evidence |
 | --- | --- | --- |
-| `php artisan test` | Passed | 54 tests, 176 assertions, 2.64 seconds. |
+| `php artisan test` | Passed | 55 tests, 183 assertions, 2.16 seconds. |
+| `php artisan test --configuration=phpunit.mysql.xml` | Safely blocked | Exited before Laravel boot because `.env.testing` is absent; no database was touched. |
 | `php artisan route:list --path=api -vv` | Passed | 13 API routes registered; all logout, user, item, and customer routes show `Authenticate:sanctum`. |
 | `vendor/bin/pint --test` | Initially failed, then fixed | Detected formatting drift in `bootstrap/app.php`, `bootstrap/providers.php`, and `config/auth.php`. `vendor/bin/pint` applied its deterministic fixes; the subsequent `vendor/bin/pint --test` passed. |
 | `composer validate --no-check-publish` | Passed | `composer.json` is valid. Composer also reported the sandbox Git-ownership warning; this did not affect dependency manifest validation. |
 | `git diff --check` | Passed | No whitespace errors. |
+
+## Production-readiness configuration
+
+- `composer.json` now requires PHP 8.3 or later, matching the README and GitHub Actions runtime.
+- `.env.production.example` documents safe production settings: debug disabled, HTTPS URL generation enabled after TLS termination, rotating daily logs, and an explicit CORS allowlist.
+- Cross-origin API requests are denied unless `CORS_ALLOWED_ORIGINS` lists the calling HTTPS origin.
+- The existing `POST /api/auth/login` route is limited to five requests per minute per email-and-IP pair. The route path, method, request body, and success response are unchanged.
+- The automated suite verifies that the sixth login attempt receives HTTP 429.
 
 ## Endpoint audit
 
